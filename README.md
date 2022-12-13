@@ -6,6 +6,7 @@ Parse and print out incoming HTTP requests and its content to console, and alway
 
 ### Features 
 
+0. Output is designed for human reading (for code simplicity)
 1. Only python standard libraries are used
 2. Very small ~kinda~ (131 lines @ 5k)
 3. Can parse and format
