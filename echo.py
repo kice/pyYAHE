@@ -23,23 +23,19 @@ class RequestHandler(BaseHTTPRequestHandler):
         print(f'> {method} {self.path} {self.request_version}')
         for k, v in self.headers.items():
             print(f'> {k}: {v}')
+        print()
 
         content_length = self.headers.get('content-length')
         length = int(content_length) if content_length else 0
 
         missing = object()
         content_type = self.headers.get('content-type', missing)
-        if content_type is missing:
-            mime = 'text/plain'
-            options = {}
-            encoding = 'utf-8'
-        else:
+        mime, options, encoding = 'text/plain', {}, 'utf-8'
+        if not (content_type is missing):
             msg = EmailMessage()
             msg['content-type'] = content_type
             mime, options = msg.get_content_type(), msg['content-type'].params
             encoding = options['charset'] if 'charset' in options else 'utf-8'
-
-        print()
 
         if length == 0:
             print("<no body>\n<----- Request End -----\n")
@@ -83,24 +79,22 @@ class RequestHandler(BaseHTTPRequestHandler):
                     part[:4] != b'--\r\n' and part != b'--'
                 ):
                     continue
-
-                if i == 0 and part.startswith(boundary):
+                elif i == 0 and part.startswith(boundary):
                     part = part[len(boundary):]
 
                 idx = part.find(b'\r\n\r\n')
                 if idx == -1:
                     raise Exception('content does not contain CR-LF-CR-LF')
                 elif idx == 0:
-                    headers = {}
-                    content = part
+                    headers, content = {}, part
                 else:
                     text = part[:idx].decode('utf-8').lstrip()
                     headers = email.parser.HeaderParser().parsestr(text)
                     content = part[idx + len(b'\r\n\r\n'):]
-                print(f'> FormData {i+1}:')
+                print(f'* FormData {i+1}:')
                 for k, v in headers.items():
                     print(f'{k}: {v}')
-                print(f'<binary data, len={len(content)} ({content[:20]})>\n')
+                print(f'<binary data, len={len(content)} ({content[:32]}{"..." if len(content) > 32 else ""})>\n')
         else:
             print(f'<binary data, len={len(request_body)}>')
             off = 0
